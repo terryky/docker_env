@@ -1,0 +1,49 @@
+
+
+# イメージ生成するにあたって、ベースにするイメージ
+#FROM tensorflow/tensorflow:latest-devel-py3
+FROM tensorflow/tensorflow:1.12.0-devel-gpu-py3
+
+# イメージに追加する初期ユーザアカウント名
+# build 時に --build-arg で指定することも可  
+ARG USER_NAME=tftest
+ARG UID=1000
+
+# イメージに設定するproxy 設定
+ARG http_proxy
+ARG https_proxy
+
+
+
+# apt ミラーサーバ設定
+RUN sed -i -e 's/http:\/\/archive.ubuntu.com\/ubuntu\//mirror:\/\/mirrors.ubuntu.com\/mirrors.txt/' /etc/apt/sources.list
+
+# パッケージ追加
+RUN apt-get update && apt-get install -yq \
+	    sudo \
+	    vim \
+	    git ssh-client \
+	    wget \
+	    autoconf automake libtool 
+
+
+# Tensorflow を最新版に更新
+#RUN pip uninstall -y tensorflow-gpu \
+#&&  pip install -U tensorflow-gpu==1.12
+
+
+# ユーザアカウント追加
+RUN adduser --disabled-password --shell /bin/bash --gecos "" ${USER_NAME} --uid ${UID} \
+&&  echo "${USER_NAME} ALL=(root) NOPASSWD:ALL" > /etc/sudoers.d/${USER_NAME} \
+&&  chmod 0440 /etc/sudoers.d/${USER_NAME} 
+
+# Tensorflow ソースコード取得
+#COPY ./share_volume/scripts/clone_tensorflow.sh /tmp/clone_tensorflow.sh
+#RUN su - ${USER_NAME} -c "export http_proxy=${http_proxy}; export https_proxy=${https_proxy}; /tmp/clone_tensorflow.sh"
+
+
+#RUN echo "export http_proxy="${http_proxy} >> /etc/environment
+#RUN echo "export https_proxy="${https_proxy} >> /etc/environment
+
+WORKDIR /home/${USER_NAME}
+
